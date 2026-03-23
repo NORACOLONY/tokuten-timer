@@ -44,7 +44,7 @@ h2 { margin: 10px 0; font-size: 20px; }
 
 #container {
   display: grid;
-  grid-template-columns: 1fr; /* スマホ向け1列固定 */
+  grid-template-columns: repeat(2, 1fr); /* 横2列固定 */
   gap: 6px;
   padding: 6px;
 }
@@ -70,7 +70,7 @@ h2 { margin: 10px 0; font-size: 20px; }
 }
 
 .time {
-  font-size: clamp(20px, 10vw, 36px);
+  font-size: clamp(20px, 8vw, 34px);
   margin: 4px 0;
 }
 
@@ -81,8 +81,8 @@ h2 { margin: 10px 0; font-size: 20px; }
 
 button {
   flex: 1 1 0;
-  padding: 10px 0;
-  font-size: 14px;
+  padding: 14px 0;  /* 縦に大きめに */
+  font-size: 16px;  /* 押しやすいサイズ */
   border-radius: 8px;
   border: none;
 }
@@ -121,14 +121,14 @@ button {
   text-transform: uppercase;
 }
 
-/* スマホ向け微調整 */
+/* スマホ用微調整 */
 @media (max-width: 480px) {
   .time {
     font-size: clamp(18px, 12vw, 32px);
   }
   button {
-    font-size: 12px;
-    padding: 8px 0;
+    padding: 16px 0;  /* さらに縦大きめ */
+    font-size: 16px;
   }
 }
 </style>
