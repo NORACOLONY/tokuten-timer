@@ -28,7 +28,15 @@ h2 { margin: 8px 0; font-size: 18px; }
 
 #container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; width:100%; }
 
-.row { border-radius:12px; display:flex; flex-direction:column; background:#333; cursor:pointer; padding:6px; height:calc((100vh - 140px)/6); }
+.row {
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  background:#333;
+  cursor:pointer;
+  padding:6px;
+  height:100px; /* 高さ固定 */
+}
 
 .row-content { display:flex; width:100%; }
 
