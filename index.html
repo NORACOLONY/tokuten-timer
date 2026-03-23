@@ -28,7 +28,7 @@ h2 { margin: 8px 0; font-size: 18px; }
 
 #container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; width:100%; }
 
-.row { border-radius:12px; display:flex; flex-direction:column; background:#333; cursor:pointer; padding:6px; }
+.row { border-radius:12px; display:flex; flex-direction:column; background:#333; cursor:pointer; padding:6px; height:calc((100vh - 140px)/6); }
 
 .row-content { display:flex; width:100%; }
 
@@ -105,7 +105,6 @@ function loadPreset(){
   const data=JSON.parse(localStorage.getItem("preset_"+currentTab)||"null");
   if(!data||data.length===0) for(let i=0;i<6;i++) createRow();
   else data.forEach(d=>createRow(0,d));
-  adjustRowHeight();
 }
 
 function createRow(i,data={}){
@@ -184,17 +183,8 @@ function createRow(i,data={}){
   document.getElementById("container").appendChild(row);
 }
 
-function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); adjustRowHeight(); } }
-function removeRow(){ const rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); adjustRowHeight(); } }
-
-function adjustRowHeight(){
-  const rows=document.querySelectorAll('.row');
-  const screenHeight=window.innerHeight-140;
-  const defaultHeight=Math.floor(screenHeight/6);
-  rows.forEach(r=>r.style.height=defaultHeight+'px');
-}
-
-window.addEventListener('resize', adjustRowHeight);
+function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
+function removeRow(){ const rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
 
 switchTab(0); updateTabs();
 </script>
