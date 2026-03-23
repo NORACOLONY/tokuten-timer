@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>特典会タイマー</title>
+
+<!-- ▼ここが追加ポイント（そのまま入れてOK） -->
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
+<!-- ▲ここまで -->
+
+<style>
+/* 既存CSSそのまま */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: black;
+  color: white;
+  text-align: center;
+}
+
+h2 { margin: 10px 0; }
+
+/* タブ */
+#tabs {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+}
+
+.tab input {
+  width: 100%;
+  text-align: center;
+  border: none;
+  background: #222;
+  color: white;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.activeTab input {
+  background: #00ff88;
+  color: black;
+}
+
+/* コンテナ */
+#container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+.row {
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.top {
+  display: flex;
+  gap: 5px;
+}
+
+.name {
+  flex: 1;
+  font-size: 16px;
+}
+
+.color {
+  width: 40px;
+}
+
+.time {
+  font-size: 36px;
+  margin: 6px 0;
+}
+
+.buttons {
+  display: flex;
+  gap: 5px;
+}
+
+button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+}
+
+.active {
+  background: #00ff88;
+  color: black;
+}
+
+.blink {
+  animation: blinkBg 0.6s infinite;
+}
+
+@keyframes blinkBg {
+  50% { opacity: 0.4; }
+}
+
+#controls {
+  margin: 10px;
+}
+
+#controls button {
+  width: 45%;
+}
+
+#footer {
+  margin: 20px 0;
+  font-size: 11px;
+  opacity: 0.5;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+</style>
+</head>
+
+<body>
+
+<h2>特典会タイマー</h2>
+
+<div id="tabs"></div>
+<div id="container"></div>
+
+<div id="controls">
+  <button onclick="addRow()">＋追加</button>
+  <button onclick="removeRow()">−削除</button>
+</div>
+
+<div id="footer">Created by TEURU</div>
+
+<audio id="endSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+
+<script>
+let currentTab = 0;
+let maxRows = 10;
+
+/* タブ生成 */
+for (let i = 0; i < 5; i++) {
+  let tab = document.createElement("div");
+  tab.className = "tab";
+
+  let input = document.createElement("input");
+  input.value = localStorage.getItem("tab_name_"+i) || "Preset " + (i+1);
+
+  input.oninput = () => {
+    localStorage.setItem("tab_name_"+i, input.value);
+  };
+
+  tab.appendChild(input);
+  tab.onclick = () => switchTab(i);
+
+  document.getElementById("tabs").appendChild(tab);
+}
+
+/* タブ切替 */
+function switchTab(i) {
+  currentTab = i;
+  loadPreset();
+  updateTabs();
+}
+
+function updateTabs() {
+  document.querySelectorAll(".tab").forEach((t, i) => {
+    t.classList.toggle("activeTab", i === currentTab);
+  });
+}
+
+/* 保存 */
+function savePreset() {
+  let data = [];
+
+  document.querySelectorAll(".row").forEach(row => {
+    data.push({
+      name: row.querySelector(".name").value,
+      color: row.dataset.color
+    });
+  });
+
+  localStorage.setItem("preset_" + currentTab, JSON.stringify(data));
+}
+
+/* 読み込み */
+function loadPreset() {
+  let container = document.getElementById("container");
+  container.innerHTML = "";
+
+  let data = JSON.parse(localStorage.getItem("preset_" + currentTab) || "null");
+
+  if (!data || data.length === 0) {
+    for (let i = 0; i < 6; i++) createRow();
+  } else {
+    data.forEach((d, i) => createRow(i, d));
+  }
+}
+
+/* 枠作成 */
+function createRow(i, data={}) {
+
+  let time = 30;
+  let interval = null;
+  let running = false;
+
+  const row = document.createElement("div");
+  row.className = "row";
+  row.style.background = data.color || "#333";
+  row.dataset.color = data.color || "#333";
+
+  row.onclick = () => row.classList.remove("blink");
+
+  const top = document.createElement("div");
+  top.className = "top";
+
+  const name = document.createElement("input");
+  name.className = "name";
+  name.value = data.name || "";
+
+  const color = document.createElement("input");
+  color.type = "color";
+  color.className = "color";
+  color.value = data.color || "#444444";
+
+  name.oninput = savePreset;
+
+  color.oninput = () => {
+    row.style.background = color.value;
+    row.dataset.color = color.value;
+    savePreset();
+  };
+
+  const display = document.createElement("div");
+  display.className = "time";
+  display.innerText = time;
+
+  const btn30 = document.createElement("button");
+  btn30.innerText = "30";
+
+  const btn60 = document.createElement("button");
+  btn60.innerText = "60";
+
+  function stopTimer() {
+    clearInterval(interval);
+    running = false;
+    btn30.classList.remove("active");
+    btn60.classList.remove("active");
+  }
+
+  function start(sec, btn) {
+    if (running) return stopTimer();
+
+    stopTimer();
+    time = sec;
+    running = true;
+    btn.classList.add("active");
+
+    interval = setInterval(() => {
+      if (time > 0) {
+        time--;
+        display.innerText = time;
+      } else {
+        stopTimer();
+        document.getElementById("endSound").play();
+        row.classList.add("blink");
+      }
+    }, 1000);
+  }
+
+  btn30.onclick = () => start(30, btn30);
+  btn60.onclick = () => start(60, btn60);
+
+  const btnWrap = document.createElement("div");
+  btnWrap.className = "buttons";
+
+  btnWrap.appendChild(btn30);
+  btnWrap.appendChild(btn60);
+
+  row.appendChild(top);
+  top.appendChild(name);
+  top.appendChild(color);
+
+  row.appendChild(display);
+  row.appendChild(btnWrap);
+
+  document.getElementById("container").appendChild(row);
+}
+
+/* 追加 */
+function addRow() {
+  if (document.querySelectorAll(".row").length < maxRows) {
+    createRow();
+    savePreset();
+  }
+}
+
+/* 削除 */
+function removeRow() {
+  let rows = document.querySelectorAll(".row");
+  if (rows.length > 0) {
+    rows[rows.length - 1].remove();
+    savePreset();
+  }
+}
+
+/* 初期化 */
+switchTab(0);
+updateTabs();
+</script>
+
+</body>
+</html>
