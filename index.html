@@ -4,9 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>特典会タイマー</title>
 
-<link rel="icon" href="favicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
-
 <style>
 * { box-sizing: border-box; }
 
@@ -23,7 +20,7 @@ h2 { margin: 10px 0; font-size: 20px; }
 
 #tabs {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   padding: 5px;
   overflow-x: auto;
 }
@@ -31,7 +28,7 @@ h2 { margin: 10px 0; font-size: 20px; }
 .tab {
   flex: 1 0 auto;
   background: #222;
-  padding: 8px;
+  padding: 6px;
   border-radius: 6px;
   font-size: 12px;
   white-space: nowrap;
@@ -45,45 +42,49 @@ h2 { margin: 10px 0; font-size: 20px; }
 #container {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 横2列固定 */
-  gap: 6px;
-  padding: 6px;
+  gap: 4px;
+  padding: 4px;
 }
 
 .row {
-  border-radius: 12px;
-  padding: 8px;
+  border-radius: 10px;
+  padding: 6px;
 }
 
 .top {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .name {
   flex: 1 1 0;
   font-size: 14px;
   min-width: 0;
+  padding: 4px;
 }
 
 .color {
-  width: 36px;
+  width: 30px;
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 .time {
-  font-size: clamp(20px, 8vw, 34px);
-  margin: 4px 0;
+  font-size: clamp(18px, 8vw, 28px);
+  margin: 2px 0;
 }
 
 .buttons {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 button {
   flex: 1 1 0;
-  padding: 14px 0;  /* 縦に大きめに */
-  font-size: 16px;  /* 押しやすいサイズ */
-  border-radius: 8px;
+  padding: 12px 0; /* 少し縦大きめで押しやすく */
+  font-size: 14px;
+  border-radius: 6px;
   border: none;
 }
 
@@ -120,24 +121,11 @@ button {
   letter-spacing: 3px;
   text-transform: uppercase;
 }
-
-/* スマホ用微調整 */
-@media (max-width: 480px) {
-  .time {
-    font-size: clamp(18px, 12vw, 32px);
-  }
-  button {
-    padding: 16px 0;  /* さらに縦大きめ */
-    font-size: 16px;
-  }
-}
 </style>
 </head>
-
 <body>
 
 <h2>特典会タイマー</h2>
-
 <div id="tabs"></div>
 <div id="container"></div>
 
@@ -170,9 +158,7 @@ for (let i = 0; i < 5; i++) {
         tab.innerText = newName;
         localStorage.setItem("tab_name_"+i, newName);
       }
-    } else {
-      switchTab(i);
-    }
+    } else { switchTab(i); }
   };
   document.getElementById("tabs").appendChild(tab);
 }
@@ -183,152 +169,66 @@ function switchTab(i) {
   loadPreset();
   updateTabs();
 }
-
 function updateTabs() {
-  document.querySelectorAll(".tab").forEach((t, i) => {
-    t.classList.toggle("activeTab", i === currentTab);
-  });
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("activeTab", i===currentTab));
 }
 
 /* 保存 */
 function savePreset() {
   let data = [];
   document.querySelectorAll(".row").forEach(row => {
-    data.push({
-      name: row.querySelector(".name").value,
-      color: row.dataset.color
-    });
+    data.push({ name: row.querySelector(".name").value, color: row.dataset.color });
   });
   localStorage.setItem("preset_" + currentTab, JSON.stringify(data));
 }
 
 /* 読み込み */
 function loadPreset() {
-  let container = document.getElementById("container");
+  const container = document.getElementById("container");
   container.innerHTML = "";
-  let data = JSON.parse(localStorage.getItem("preset_" + currentTab) || "null");
-  if (!data || data.length === 0) {
-    for (let i = 0; i < 6; i++) createRow();
-  } else {
-    data.forEach((d, i) => createRow(i, d));
-  }
+  const data = JSON.parse(localStorage.getItem("preset_" + currentTab) || "null");
+  if (!data || data.length===0) for(let i=0;i<6;i++) createRow();
+  else data.forEach((d,i)=>createRow(i,d));
 }
 
 /* 枠 */
-function createRow(i, data={}) {
-  let time = 30;
-  let interval = null;
-  let running = false;
+function createRow(i,data={}) {
+  let time=30, interval=null, running=false;
 
   const row = document.createElement("div");
-  row.className = "row";
-  row.style.background = data.color || "#333";
-  row.dataset.color = data.color || "#333";
+  row.className="row";
+  row.style.background=data.color||"#333";
+  row.dataset.color=data.color||"#333";
 
-  row.onclick = () => {
-    if(interval){
-      clearInterval(interval);
-      running = false;
-      btn30.classList.remove("active");
-      btn60.classList.remove("active");
-      sound.pause();
-      sound.currentTime = 0;
-      row.classList.remove("blink");
-    }
+  row.onclick=()=>{
+    if(interval){ clearInterval(interval); running=false; btn30.classList.remove("active"); btn60.classList.remove("active"); sound.pause(); sound.currentTime=0; row.classList.remove("blink"); }
   };
 
-  const top = document.createElement("div");
-  top.className = "top";
+  const top=document.createElement("div"); top.className="top";
+  const name=document.createElement("input"); name.className="name"; name.value=data.name||""; name.oninput=savePreset;
+  const color=document.createElement("input"); color.type="color"; color.className="color"; color.value=data.color||"#444444";
+  color.oninput=()=>{ row.style.background=color.value; row.dataset.color=color.value; savePreset(); };
 
-  const name = document.createElement("input");
-  name.className = "name";
-  name.value = data.name || "";
-  name.oninput = savePreset;
+  const display=document.createElement("div"); display.className="time"; display.innerText=time;
 
-  const color = document.createElement("input");
-  color.type = "color";
-  color.className = "color";
-  color.value = data.color || "#444444";
-  color.oninput = () => {
-    row.style.background = color.value;
-    row.dataset.color = color.value;
-    savePreset();
-  };
+  const btn30=document.createElement("button"); btn30.innerText="30"; btn30.onclick=(e)=>{ e.stopPropagation(); start(30,btn30); };
+  const btn60=document.createElement("button"); btn60.innerText="60"; btn60.onclick=(e)=>{ e.stopPropagation(); start(60,btn60); };
 
-  const display = document.createElement("div");
-  display.className = "time";
-  display.innerText = time;
+  function stopTimer(){ clearInterval(interval); running=false; btn30.classList.remove("active"); btn60.classList.remove("active"); sound.pause(); sound.currentTime=0; row.classList.remove("blink"); }
+  function start(sec,btn){ if(running) return stopTimer(); stopTimer(); time=sec; running=true; btn.classList.add("active"); interval=setInterval(()=>{ if(time>0){ time--; display.innerText=time; } else{ stopTimer(); sound.currentTime=0; sound.play().catch(e=>console.log("音声再生できません",e)); row.classList.add("blink"); } },1000); }
 
-  const btn30 = document.createElement("button");
-  btn30.innerText = "30";
-  btn30.onclick = (e) => { e.stopPropagation(); start(30, btn30); };
+  const btnWrap=document.createElement("div"); btnWrap.className="buttons"; btnWrap.appendChild(btn30); btnWrap.appendChild(btn60);
 
-  const btn60 = document.createElement("button");
-  btn60.innerText = "60";
-  btn60.onclick = (e) => { e.stopPropagation(); start(60, btn60); };
-
-  function stopTimer() {
-    clearInterval(interval);
-    running = false;
-    btn30.classList.remove("active");
-    btn60.classList.remove("active");
-    sound.pause();
-    sound.currentTime = 0;
-    row.classList.remove("blink");
-  }
-
-  function start(sec, btn) {
-    if (running) return stopTimer();
-    stopTimer();
-    time = sec;
-    running = true;
-    btn.classList.add("active");
-    interval = setInterval(() => {
-      if (time > 0) {
-        time--;
-        display.innerText = time;
-      } else {
-        stopTimer();
-        sound.currentTime = 0;
-        sound.play().catch(e => console.log("音声再生できません:", e));
-        row.classList.add("blink");
-      }
-    }, 1000);
-  }
-
-  const btnWrap = document.createElement("div");
-  btnWrap.className = "buttons";
-  btnWrap.appendChild(btn30);
-  btnWrap.appendChild(btn60);
-
-  row.appendChild(top);
-  top.appendChild(name);
-  top.appendChild(color);
-  row.appendChild(display);
-  row.appendChild(btnWrap);
-
+  row.appendChild(top); top.appendChild(name); top.appendChild(color); row.appendChild(display); row.appendChild(btnWrap);
   document.getElementById("container").appendChild(row);
 }
 
 /* 追加削除 */
-function addRow() {
-  if (document.querySelectorAll(".row").length < maxRows) {
-    createRow();
-    savePreset();
-  }
-}
-
-function removeRow() {
-  let rows = document.querySelectorAll(".row");
-  if (rows.length > 0) {
-    rows[rows.length - 1].remove();
-    savePreset();
-  }
-}
+function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
+function removeRow(){ let rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
 
 /* 初期化 */
-switchTab(0);
-updateTabs();
+switchTab(0); updateTabs();
 </script>
 
 </body>
