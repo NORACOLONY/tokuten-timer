@@ -19,15 +19,16 @@ h2 { margin: 8px 0; font-size: 18px; }
 
 #tabs {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   padding: 4px;
   overflow-x: auto;
 }
 .tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap;}
 .activeTab{ background:#00ff88; color:black; }
 
-#container { display:grid; grid-template-columns:1fr; gap:4px; padding:2px; width:100%; }
-.row { border-radius:8px; display:flex; flex-direction:column; background:#333; overflow:hidden; cursor:pointer; }
+#container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; width:100%; }
+
+.row { border-radius:12px; display:flex; flex-direction:column; background:#333; cursor:pointer; padding:6px; }
 
 .row-content { display:flex; width:100%; }
 
@@ -39,9 +40,9 @@ h2 { margin: 8px 0; font-size: 18px; }
 
 .color { width:32px; height:32px; border:none; padding:0; }
 
-.buttons { display:flex; gap:4px; margin-top:4px; }
+.buttons { display:flex; gap:4px; margin-top:6px; }
 
-button { flex:1; font-size:16px; padding:10px 0; border-radius:6px; border:none; }
+button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none; }
 
 .active { background:#00ff88; color:black; }
 
