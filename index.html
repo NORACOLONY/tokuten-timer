@@ -3,7 +3,6 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>特典会タイマー</title>
-
 <style>
 * { box-sizing: border-box; }
 body {
@@ -24,45 +23,35 @@ h2 { margin: 8px 0; font-size: 18px; }
   padding: 4px;
   overflow-x: auto;
 }
+.tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap;}
+.activeTab{ background:#00ff88; color:black; }
 
-.tab {
-  flex: 1 0 auto;
-  background: #222;
-  padding: 4px;
-  border-radius: 6px;
-  font-size: 12px;
-  white-space: nowrap;
-}
+#container { display:grid; grid-template-columns:1fr; gap:4px; padding:2px; width:100%; }
+.row { border-radius:8px; display:flex; flex-direction:column; background:#333; overflow:hidden; cursor:pointer; }
 
-.activeTab { background: #00ff88; color: black; }
+.row-content { display:flex; width:100%; }
 
-#container { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 2px; width: 100%; }
+.count { flex:1 1 50%; font-size:28px; display:flex; align-items:center; justify-content:center; }
 
-.row { border-radius: 8px; padding: 4px; display: flex; flex-direction: column; background: #333; }
+.right { flex:1 1 50%; display:flex; gap:4px; align-items:center; padding:0 4px; }
 
-.row-content { display: flex; width: 100%; }
+.name { flex:1; padding:6px; font-size:14px; }
 
-.count { flex: 1 1 50%; font-size: 28px; display: flex; align-items: center; justify-content: center; }
+.color { width:32px; height:32px; border:none; padding:0; }
 
-.right { flex: 1 1 50%; display: flex; gap: 4px; align-items: center; padding: 0 4px; }
+.buttons { display:flex; gap:4px; margin-top:4px; }
 
-.name { flex: 1; padding: 6px; font-size: 14px; }
+button { flex:1; font-size:16px; padding:10px 0; border-radius:6px; border:none; }
 
-.color { width: 32px; height: 32px; border: none; padding: 0; }
-
-.buttons { display: flex; gap: 4px; margin-top: 4px; }
-
-button { flex: 1; font-size: 16px; padding: 10px 0; border-radius: 6px; border: none; }
-
-.active { background: #00ff88; color: black; }
+.active { background:#00ff88; color:black; }
 
 .blink { animation: blinkBg 0.6s infinite; }
-@keyframes blinkBg { 50% { opacity: 0.4; } }
+@keyframes blinkBg{50%{opacity:0.4;}}
 
-#controls { margin: 6px 0; display: flex; gap: 4%; justify-content: center; }
-#controls button { width: 45%; font-size: 14px; padding: 8px 0; }
+#controls { margin:6px 0; display:flex; gap:4%; justify-content:center; }
+#controls button{ width:45%; font-size:14px; padding:8px 0; }
 
-#footer { margin: 12px 0; font-size: 10px; opacity: 0.5; letter-spacing: 2px; text-transform: uppercase; }
+#footer { margin:12px 0; font-size:10px; opacity:0.5; letter-spacing:2px; text-transform:uppercase; }
 </style>
 </head>
 <body>
@@ -119,24 +108,12 @@ function loadPreset(){
 }
 
 function createRow(i,data={}){
-  let time=30,interval=null,running=false;
+  let time=30, interval=null, running=false;
 
   const row=document.createElement("div");
   row.className="row";
   row.style.background=data.color||"#333";
   row.dataset.color=data.color||"#333";
-
-  row.onclick=()=>{
-    if(interval){
-      clearInterval(interval);
-      running=false;
-      btn30.classList.remove("active");
-      btn60.classList.remove("active");
-      sound.pause();
-      sound.currentTime=0;
-      row.classList.remove("blink");
-    }
-  };
 
   const rowContent=document.createElement("div");
   rowContent.className="row-content";
@@ -161,7 +138,6 @@ function createRow(i,data={}){
 
   right.appendChild(name);
   right.appendChild(color);
-
   rowContent.appendChild(count);
   rowContent.appendChild(right);
 
@@ -170,42 +146,49 @@ function createRow(i,data={}){
 
   const btn30=document.createElement("button");
   btn30.innerText="30";
-  btn30.onclick=(e)=>{ e.stopPropagation(); start(30,btn30,count,row); };
   const btn60=document.createElement("button");
   btn60.innerText="60";
-  btn60.onclick=(e)=>{ e.stopPropagation(); start(60,btn60,count,row); };
+
+  function stopTimer(){
+    if(interval){ clearInterval(interval); interval=null; running=false; btn30.classList.remove("active"); btn60.classList.remove("active"); sound.pause(); sound.currentTime=0; row.classList.remove("blink"); }
+  }
+
+  function start(sec,btn){
+    if(running){ stopTimer(); return; }
+    stopTimer();
+    time=sec;
+    running=true;
+    btn.classList.add("active");
+    interval=setInterval(()=>{
+      if(time>0){ time--; count.innerText=time; }
+      else{
+        stopTimer();
+        row.classList.add("blink");
+        sound.currentTime=0; sound.play().catch(e=>console.log(e));
+      }
+    },1000);
+  }
+
+  btn30.onclick=(e)=>{ e.stopPropagation(); start(30,btn30); };
+  btn60.onclick=(e)=>{ e.stopPropagation(); start(60,btn60); };
+
+  row.addEventListener("click", ()=>{
+    stopTimer();
+  });
 
   btnWrap.appendChild(btn30);
   btnWrap.appendChild(btn60);
-
   row.appendChild(rowContent);
   row.appendChild(btnWrap);
   document.getElementById("container").appendChild(row);
 }
 
-function start(sec,btn,countEl,rowEl){
-  let time=sec, running=true;
-  const interval=setInterval(()=>{
-    if(time>0){ time--; countEl.innerText=time; }
-    else{
-      clearInterval(interval);
-      running=false;
-      btn.classList.remove("active");
-      sound.currentTime=0; sound.play().catch(e=>console.log(e));
-      rowEl.classList.add("blink");
-    }
-  },1000);
-  btn.classList.add("active");
-  rowEl.dataset.interval=interval;
-}
-
 function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); adjustRowHeight(); } }
-function removeRow(){ let rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); adjustRowHeight(); } }
+function removeRow(){ const rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); adjustRowHeight(); } }
 
-/* 初期6枠で画面に収まる行高さに設定 */
 function adjustRowHeight(){
   const rows=document.querySelectorAll('.row');
-  const screenHeight=window.innerHeight-140; // タブ・コントロール・余白込み
+  const screenHeight=window.innerHeight-140;
   const defaultHeight=Math.floor(screenHeight/6);
   rows.forEach(r=>r.style.height=defaultHeight+'px');
 }
