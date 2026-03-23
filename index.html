@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>特典会タイマー</title>
 <link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
 <style>
 * { box-sizing: border-box; }
 body {
@@ -44,7 +45,7 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 .blink { animation: blinkBg 0.6s infinite; }
 @keyframes blinkBg{50%{opacity:0.4;}}
 
-#controls { margin:6px 0; display:flex; gap:4%; justify-content:center; flex-wrap:wrap; }
+#controls { margin:6px 0; display:flex; gap:4%; justify-content:center; }
 #controls button{ width:28%; font-size:14px; padding:8px 0; }
 #footer { margin:12px 0; font-size:10px; opacity:0.5; letter-spacing:2px; text-transform:uppercase; }
 </style>
@@ -58,7 +59,7 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 <div id="controls">
   <button onclick="addRow()">＋追加</button>
   <button onclick="removeRow()">−削除</button>
-  <button id="testSoundBtn" onclick="toggleTestSound()">音声テスト</button>
+  <button onclick="testSound()">音声テスト</button>
 </div>
 
 <div id="footer">Created by TEURU</div>
@@ -71,6 +72,7 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 let currentTab=0, maxRows=10;
 const sound=document.getElementById("endSound");
 sound.load();
+let testPlaying=false;
 
 /* タブ生成 */
 for(let i=0;i<5;i++){
@@ -195,7 +197,7 @@ function createRow(i,data={}){
       sound.pause(); sound.currentTime=0;
       row.classList.remove("blink");
     }
-    stopTimer(true);
+    stopTimer(true); // ignoreActiveでボタン状態維持
   });
 
   btnWrap.appendChild(btn30);
@@ -208,19 +210,18 @@ function createRow(i,data={}){
 function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
 function removeRow(){ const rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
 
-switchTab(0); updateTabs();
-
-/* 音声テストボタン */
-const testSoundBtn = document.getElementById("testSoundBtn");
-function toggleTestSound(){
-  if(!sound.paused){
+function testSound(){
+  if(!testPlaying){
+    sound.currentTime=0; sound.play().catch(e=>console.log(e));
+    testPlaying=true;
+  } else {
     sound.pause();
     sound.currentTime=0;
-  } else {
-    sound.currentTime=0;
-    sound.play().catch(e=>console.log(e));
+    testPlaying=false;
   }
 }
+
+switchTab(0); updateTabs();
 </script>
 
 </body>
