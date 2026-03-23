@@ -13,43 +13,41 @@ body {
   background: black;
   color: white;
   text-align: center;
+  max-width: 100vw;
   overflow-x: hidden; /* 横スクロール防止 */
 }
 
-h2 { margin: 10px 0; font-size: 20px; }
+h2 { margin: 8px 0; font-size: 18px; }
 
 #tabs {
   display: flex;
-  gap: 4px;
-  padding: 5px;
+  gap: 2px;
+  padding: 4px;
   overflow-x: auto;
 }
 
 .tab {
   flex: 1 0 auto;
   background: #222;
-  padding: 6px;
+  padding: 4px;
   border-radius: 6px;
   font-size: 12px;
   white-space: nowrap;
 }
 
-.activeTab {
-  background: #00ff88;
-  color: black;
-}
+.activeTab { background: #00ff88; color: black; }
 
 #container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
-  padding: 4px;
+  gap: 2px;
+  padding: 2px;
   width: 100%;
 }
 
 .row {
-  border-radius: 10px;
-  padding: 6px;
+  border-radius: 8px;
+  padding: 3px;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -57,27 +55,27 @@ h2 { margin: 10px 0; font-size: 20px; }
 
 .top {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
 }
 
 .name {
   flex: 1 1 auto;
-  font-size: 14px;
-  padding: 4px;
+  font-size: 13px;
+  padding: 3px;
   min-width: 0;
 }
 
 .color {
-  width: 36px;
-  flex-shrink: 0; /* これで縮まらず必ず表示 */
-  height: 32px;
+  width: 28px;
+  flex-shrink: 0;
+  height: 28px;
   border: none;
   padding: 0;
 }
 
 .time {
-  font-size: clamp(18px, 8vw, 28px);
+  font-size: clamp(16px, 7vw, 24px);
   margin: 2px 0;
 }
 
@@ -89,43 +87,31 @@ h2 { margin: 10px 0; font-size: 20px; }
 
 button {
   flex: 1;
-  padding: 12px 0;
-  font-size: 14px;
-  border-radius: 6px;
+  padding: 8px 0;
+  font-size: 13px;
+  border-radius: 5px;
   border: none;
 }
 
-.active {
-  background: #00ff88;
-  color: black;
-}
+.active { background: #00ff88; color: black; }
 
-.blink {
-  animation: blinkBg 0.6s infinite;
-}
-
-@keyframes blinkBg {
-  50% { opacity: 0.4; }
-}
+.blink { animation: blinkBg 0.6s infinite; }
+@keyframes blinkBg { 50% { opacity: 0.4; } }
 
 #controls {
-  margin: 10px 0;
+  margin: 8px 0;
   display: flex;
   gap: 4%;
   justify-content: center;
 }
 
-#controls button {
-  width: 45%;
-  font-size: 14px;
-  padding: 10px 0;
-}
+#controls button { width: 45%; font-size: 13px; padding: 8px 0; }
 
 #footer {
-  margin: 20px 0;
-  font-size: 11px;
+  margin: 12px 0;
+  font-size: 10px;
   opacity: 0.5;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 </style>
@@ -152,6 +138,7 @@ let currentTab=0, maxRows=10;
 const sound=document.getElementById("endSound");
 sound.load();
 
+/* タブ生成 */
 for(let i=0;i<5;i++){
   const tab=document.createElement("div");
   tab.className="tab";
