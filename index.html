@@ -14,16 +14,9 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
 }
-
 h2 { margin: 8px 0; font-size: 18px; }
-
-#tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  overflow-x: auto;
-}
-.tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap;}
+#tabs { display:flex; gap:4px; padding:4px; overflow-x:auto; }
+.tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap; }
 .activeTab{ background:#00ff88; color:black; }
 
 #container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; width:100%; }
@@ -37,29 +30,21 @@ h2 { margin: 8px 0; font-size: 18px; }
   padding:6px;
   height:100px; /* 高さ固定 */
 }
-
 .row-content { display:flex; width:100%; }
-
 .count { flex:1 1 50%; font-size:28px; display:flex; align-items:center; justify-content:center; }
-
 .right { flex:1 1 50%; display:flex; gap:4px; align-items:center; padding:0 4px; }
-
 .name { flex:1; padding:6px; font-size:14px; }
-
 .color { width:32px; height:32px; border:none; padding:0; }
-
 .buttons { display:flex; gap:4px; margin-top:6px; }
-
 button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none; }
-
 .active { background:#00ff88; color:black; }
+.paused { background:yellow; color:black; }
 
 .blink { animation: blinkBg 0.6s infinite; }
 @keyframes blinkBg{50%{opacity:0.4;}}
 
 #controls { margin:6px 0; display:flex; gap:4%; justify-content:center; }
 #controls button{ width:45%; font-size:14px; padding:8px 0; }
-
 #footer { margin:12px 0; font-size:10px; opacity:0.5; letter-spacing:2px; text-transform:uppercase; }
 </style>
 </head>
@@ -116,7 +101,7 @@ function loadPreset(){
 }
 
 function createRow(i,data={}){
-  let time=30, interval=null, running=false;
+  let time=30, interval=null, running=false, state="inactive";
 
   const row=document.createElement("div");
   row.className="row";
@@ -157,31 +142,58 @@ function createRow(i,data={}){
   const btn60=document.createElement("button");
   btn60.innerText="60";
 
-  function stopTimer(){
-    if(interval){ clearInterval(interval); interval=null; running=false; btn30.classList.remove("active"); btn60.classList.remove("active"); sound.pause(); sound.currentTime=0; row.classList.remove("blink"); }
+  function stopTimer(ignoreActive=false){
+    if(interval){ 
+      clearInterval(interval); interval=null; running=false; 
+      btn30.classList.remove("active","paused"); 
+      btn60.classList.remove("active","paused"); 
+      if(!ignoreActive){ sound.pause(); sound.currentTime=0; row.classList.remove("blink"); state="inactive"; }
+    }
   }
 
-  function start(sec,btn){
-    if(running){ stopTimer(); return; }
-    stopTimer();
-    time=sec;
+  function startPauseResume(sec, btn){
+    if(row.classList.contains("blink")) return; // 点滅中は無効
+    if(state==="inactive"){
+      time=sec; count.innerText=time;
+      startTimer(btn);
+      state="running";
+      btn.classList.add("active");
+    } else if(state==="running"){
+      clearInterval(interval); running=false;
+      state="paused";
+      btn.classList.add("paused");
+    } else if(state==="paused"){
+      startTimer(btn);
+      state="running";
+      btn.classList.remove("paused");
+    }
+  }
+
+  function startTimer(btn){
     running=true;
-    btn.classList.add("active");
     interval=setInterval(()=>{
-      if(time>0){ time--; count.innerText=time; }
-      else{
-        stopTimer();
+      if(time>0){
+        time--; count.innerText=time;
+      } else {
+        clearInterval(interval); interval=null; running=false;
         row.classList.add("blink");
         sound.currentTime=0; sound.play().catch(e=>console.log(e));
+        state="inactive";
+        btn30.classList.remove("active","paused");
+        btn60.classList.remove("active","paused");
       }
     },1000);
   }
 
-  btn30.onclick=(e)=>{ e.stopPropagation(); start(30,btn30); };
-  btn60.onclick=(e)=>{ e.stopPropagation(); start(60,btn60); };
+  btn30.onclick=(e)=>{ e.stopPropagation(); startPauseResume(30,btn30); };
+  btn60.onclick=(e)=>{ e.stopPropagation(); startPauseResume(60,btn60); };
 
   row.addEventListener("click", ()=>{
-    stopTimer();
+    if(row.classList.contains("blink")){
+      sound.pause(); sound.currentTime=0;
+      row.classList.remove("blink");
+    }
+    stopTimer(true); // ignoreActiveでボタン状態維持
   });
 
   btnWrap.appendChild(btn30);
