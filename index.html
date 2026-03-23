@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>特典会タイマー</title>
 
-<!-- ファビコン -->
+<!-- ファビコン追加 -->
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
 
@@ -52,19 +52,18 @@ h2 { margin: 10px 0; }
   display: flex;
   align-items: center;
   border-radius: 12px;
-  padding: 6px;
+  padding: 8px;
   min-height: 60px;
 }
 
 .nameColor {
   display: flex;
+  flex-direction: column;
   flex: 1;
   gap: 4px;
-  align-items: center;
 }
 
 .name {
-  flex: 1;
   font-size: 14px;
 }
 
@@ -83,17 +82,15 @@ h2 { margin: 10px 0; }
 
 .buttons {
   display: flex;
+  flex-direction: column;
   gap: 4px;
-  flex: 1;
 }
 
 button {
-  flex: 1;
   padding: 10px 0;
   font-size: 14px;
   border-radius: 8px;
   border: none;
-  min-width: 0;
 }
 
 .active {
@@ -269,6 +266,8 @@ function createRow(i, data={}) {
     paused = false;
     btn30.classList.remove("active");
     btn60.classList.remove("active");
+    btn30.style.background = "";
+    btn60.style.background = "";
   }
 
   function start(sec, btn) {
@@ -277,7 +276,6 @@ function createRow(i, data={}) {
     if (running && !paused) { // 一時停止
       paused = true;
       clearInterval(interval);
-      btn.classList.add("active");
       btn.style.background = "yellow";
       return;
     } else if (running && paused) { // 再開
@@ -291,7 +289,6 @@ function createRow(i, data={}) {
     stopTimer();
     time = sec;
     running = true;
-    btn.classList.add("active");
     btn.style.background = "#00ff88";
 
     interval = setInterval(countDown, 1000);
