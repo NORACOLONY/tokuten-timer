@@ -3,54 +3,134 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>特典会タイマー</title>
+
+<!-- ファビコン -->
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
+
 <style>
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: sans-serif;
   background: black;
   color: white;
   text-align: center;
-  max-width: 100vw;
   overflow-x: hidden;
 }
-h2 { margin: 8px 0; font-size: 18px; }
-#tabs { display:flex; gap:4px; padding:4px; overflow-x:auto; }
-.tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap; }
-.activeTab{ background:#00ff88; color:black; }
 
-#container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; width:100%; }
+h2 { margin: 10px 0; }
+
+#tabs {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+}
+
+.tab {
+  flex: 1;
+  background: #222;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.activeTab {
+  background: #00ff88;
+  color: black;
+}
+
+#container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+}
 
 .row {
-  border-radius:12px;
-  display:flex;
-  flex-direction:column;
-  background:#333;
-  cursor:pointer;
-  padding:6px;
-  height:100px; /* 高さ固定 */
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  padding: 6px;
+  min-height: 60px;
 }
-.row-content { display:flex; width:100%; }
-.count { flex:1 1 50%; font-size:28px; display:flex; align-items:center; justify-content:center; }
-.right { flex:1 1 50%; display:flex; gap:4px; align-items:center; padding:0 4px; }
-.name { flex:1; padding:6px; font-size:14px; }
-.color { width:32px; height:32px; border:none; padding:0; }
-.buttons { display:flex; gap:4px; margin-top:6px; }
-button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none; }
-.active { background:#00ff88; color:black; }
-.paused { background:yellow; color:black; }
 
-.blink { animation: blinkBg 0.6s infinite; }
-@keyframes blinkBg{50%{opacity:0.4;}}
+.nameColor {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  align-items: center;
+}
 
-#controls { margin:6px 0; display:flex; gap:4%; justify-content:center; }
-#controls button{ width:45%; font-size:14px; padding:8px 0; }
-#footer { margin:12px 0; font-size:10px; opacity:0.5; letter-spacing:2px; text-transform:uppercase; }
+.name {
+  flex: 1;
+  font-size: 14px;
+}
+
+.color {
+  width: 36px;
+  height: 36px;
+  border: none;
+  padding: 0;
+}
+
+.time {
+  width: 50%;
+  font-size: 28px;
+  text-align: center;
+}
+
+.buttons {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+button {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  border-radius: 8px;
+  border: none;
+  min-width: 0;
+}
+
+.active {
+  background: #00ff88;
+  color: black;
+}
+
+.blink {
+  animation: blinkBg 0.6s infinite;
+}
+
+@keyframes blinkBg {
+  50% { opacity: 0.4; }
+}
+
+#controls {
+  margin: 10px;
+}
+
+#controls button {
+  width: 45%;
+}
+
+#footer {
+  margin: 20px 0;
+  font-size: 11px;
+  opacity: 0.5;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
 </style>
 </head>
+
 <body>
 
 <h2>特典会タイマー</h2>
+
 <div id="tabs"></div>
 <div id="container"></div>
 
@@ -66,147 +146,203 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 </audio>
 
 <script>
-let currentTab=0, maxRows=10;
-const sound=document.getElementById("endSound");
-sound.load();
+let currentTab = 0;
+let maxRows = 10;
+const sound = document.getElementById("endSound");
 
 /* タブ生成 */
-for(let i=0;i<5;i++){
-  const tab=document.createElement("div");
-  tab.className="tab";
-  tab.innerText=localStorage.getItem("tab_name_"+i)||"Preset "+(i+1);
-  tab.onclick=()=>{
-    if(currentTab===i){
-      const newName=prompt("プリセット名を変更",tab.innerText);
-      if(newName){ tab.innerText=newName; localStorage.setItem("tab_name_"+i,newName);}
-    } else { switchTab(i); }
+for (let i = 0; i < 5; i++) {
+  let tab = document.createElement("div");
+  tab.className = "tab";
+  tab.innerText = localStorage.getItem("tab_name_"+i) || "Preset " + (i+1);
+
+  tab.onclick = () => {
+    if (currentTab === i) {
+      let newName = prompt("プリセット名を変更", tab.innerText);
+      if (newName) {
+        tab.innerText = newName;
+        localStorage.setItem("tab_name_"+i, newName);
+      }
+    } else {
+      switchTab(i);
+    }
   };
+
   document.getElementById("tabs").appendChild(tab);
 }
 
-function switchTab(i){ currentTab=i; loadPreset(); updateTabs(); }
-function updateTabs(){ document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("activeTab",i===currentTab)); }
-
-function savePreset(){
-  const data=[]; document.querySelectorAll(".row").forEach(r=>data.push({name:r.querySelector(".name").value,color:r.dataset.color}));
-  localStorage.setItem("preset_"+currentTab,JSON.stringify(data));
+/* タブ切替 */
+function switchTab(i) {
+  currentTab = i;
+  loadPreset();
+  updateTabs();
 }
 
-function loadPreset(){
-  const container=document.getElementById("container");
-  container.innerHTML="";
-  const data=JSON.parse(localStorage.getItem("preset_"+currentTab)||"null");
-  if(!data||data.length===0) for(let i=0;i<6;i++) createRow();
-  else data.forEach(d=>createRow(0,d));
-}
-
-function createRow(i,data={}){
-  let time=30, interval=null, running=false, state="inactive";
-
-  const row=document.createElement("div");
-  row.className="row";
-  row.style.background=data.color||"#333";
-  row.dataset.color=data.color||"#333";
-
-  const rowContent=document.createElement("div");
-  rowContent.className="row-content";
-
-  const count=document.createElement("div");
-  count.className="count";
-  count.innerText=time;
-
-  const right=document.createElement("div");
-  right.className="right";
-
-  const name=document.createElement("input");
-  name.className="name";
-  name.value=data.name||"";
-  name.oninput=savePreset;
-
-  const color=document.createElement("input");
-  color.type="color";
-  color.className="color";
-  color.value=data.color||"#444444";
-  color.oninput=()=>{ row.style.background=color.value; row.dataset.color=color.value; savePreset(); };
-
-  right.appendChild(name);
-  right.appendChild(color);
-  rowContent.appendChild(count);
-  rowContent.appendChild(right);
-
-  const btnWrap=document.createElement("div");
-  btnWrap.className="buttons";
-
-  const btn30=document.createElement("button");
-  btn30.innerText="30";
-  const btn60=document.createElement("button");
-  btn60.innerText="60";
-
-  function stopTimer(ignoreActive=false){
-    if(interval){ 
-      clearInterval(interval); interval=null; running=false; 
-      btn30.classList.remove("active","paused"); 
-      btn60.classList.remove("active","paused"); 
-      if(!ignoreActive){ sound.pause(); sound.currentTime=0; row.classList.remove("blink"); state="inactive"; }
-    }
-  }
-
-  function startPauseResume(sec, btn){
-    if(row.classList.contains("blink")) return; // 点滅中は無効
-    if(state==="inactive"){
-      time=sec; count.innerText=time;
-      startTimer(btn);
-      state="running";
-      btn.classList.add("active");
-    } else if(state==="running"){
-      clearInterval(interval); running=false;
-      state="paused";
-      btn.classList.add("paused");
-    } else if(state==="paused"){
-      startTimer(btn);
-      state="running";
-      btn.classList.remove("paused");
-    }
-  }
-
-  function startTimer(btn){
-    running=true;
-    interval=setInterval(()=>{
-      if(time>0){
-        time--; count.innerText=time;
-      } else {
-        clearInterval(interval); interval=null; running=false;
-        row.classList.add("blink");
-        sound.currentTime=0; sound.play().catch(e=>console.log(e));
-        state="inactive";
-        btn30.classList.remove("active","paused");
-        btn60.classList.remove("active","paused");
-      }
-    },1000);
-  }
-
-  btn30.onclick=(e)=>{ e.stopPropagation(); startPauseResume(30,btn30); };
-  btn60.onclick=(e)=>{ e.stopPropagation(); startPauseResume(60,btn60); };
-
-  row.addEventListener("click", ()=>{
-    if(row.classList.contains("blink")){
-      sound.pause(); sound.currentTime=0;
-      row.classList.remove("blink");
-    }
-    stopTimer(true); // ignoreActiveでボタン状態維持
+function updateTabs() {
+  document.querySelectorAll(".tab").forEach((t, i) => {
+    t.classList.toggle("activeTab", i === currentTab);
   });
+}
 
+/* 保存 */
+function savePreset() {
+  let data = [];
+  document.querySelectorAll(".row").forEach(row => {
+    data.push({
+      name: row.querySelector(".name").value,
+      color: row.dataset.color
+    });
+  });
+  localStorage.setItem("preset_" + currentTab, JSON.stringify(data));
+}
+
+/* 読み込み */
+function loadPreset() {
+  let container = document.getElementById("container");
+  container.innerHTML = "";
+
+  let data = JSON.parse(localStorage.getItem("preset_" + currentTab) || "null");
+
+  if (!data || data.length === 0) {
+    for (let i = 0; i < 6; i++) createRow();
+  } else {
+    data.forEach((d, i) => createRow(i, d));
+  }
+}
+
+/* 枠作成 */
+function createRow(i, data={}) {
+
+  let time = 30;
+  let interval = null;
+  let running = false;
+  let paused = false;
+
+  const row = document.createElement("div");
+  row.className = "row";
+  row.style.background = data.color || "#333";
+  row.dataset.color = data.color || "#333";
+
+  row.onclick = () => {
+    if (row.classList.contains("blink")) {
+      row.classList.remove("blink");
+      sound.pause();
+      sound.currentTime = 0;
+    }
+  };
+
+  const display = document.createElement("div");
+  display.className = "time";
+  display.innerText = time;
+
+  const nameColor = document.createElement("div");
+  nameColor.className = "nameColor";
+
+  const name = document.createElement("input");
+  name.className = "name";
+  name.value = data.name || "";
+  name.oninput = savePreset;
+
+  const color = document.createElement("input");
+  color.type = "color";
+  color.className = "color";
+  color.value = data.color || "#444444";
+
+  color.oninput = () => {
+    row.style.background = color.value;
+    row.dataset.color = color.value;
+    savePreset();
+  };
+
+  nameColor.appendChild(name);
+  nameColor.appendChild(color);
+
+  const btn30 = document.createElement("button");
+  btn30.innerText = "30";
+
+  const btn60 = document.createElement("button");
+  btn60.innerText = "60";
+
+  function stopTimer() {
+    clearInterval(interval);
+    running = false;
+    paused = false;
+    btn30.classList.remove("active");
+    btn60.classList.remove("active");
+  }
+
+  function start(sec, btn) {
+    if (row.classList.contains("blink")) return;
+
+    if (running && !paused) { // 一時停止
+      paused = true;
+      clearInterval(interval);
+      btn.classList.add("active");
+      btn.style.background = "yellow";
+      return;
+    } else if (running && paused) { // 再開
+      paused = false;
+      btn.style.background = "#00ff88";
+      interval = setInterval(countDown, 1000);
+      return;
+    }
+
+    // 新規スタート
+    stopTimer();
+    time = sec;
+    running = true;
+    btn.classList.add("active");
+    btn.style.background = "#00ff88";
+
+    interval = setInterval(countDown, 1000);
+
+    function countDown() {
+      if (time > 0) {
+        time--;
+        display.innerText = time;
+      } else {
+        stopTimer();
+        sound.currentTime = 0;
+        sound.play();
+        row.classList.add("blink");
+      }
+    }
+  }
+
+  btn30.onclick = () => start(30, btn30);
+  btn60.onclick = () => start(60, btn60);
+
+  const btnWrap = document.createElement("div");
+  btnWrap.className = "buttons";
   btnWrap.appendChild(btn30);
   btnWrap.appendChild(btn60);
-  row.appendChild(rowContent);
+
+  row.appendChild(display);
+  row.appendChild(nameColor);
   row.appendChild(btnWrap);
+
   document.getElementById("container").appendChild(row);
 }
 
-function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
-function removeRow(){ const rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
+/* 追加削除 */
+function addRow() {
+  if (document.querySelectorAll(".row").length < maxRows) {
+    createRow();
+    savePreset();
+  }
+}
 
-switchTab(0); updateTabs();
+function removeRow() {
+  let rows = document.querySelectorAll(".row");
+  if (rows.length > 0) {
+    rows[rows.length - 1].remove();
+    savePreset();
+  }
+}
+
+/* 初期化 */
+switchTab(0);
+updateTabs();
 </script>
 
 </body>
