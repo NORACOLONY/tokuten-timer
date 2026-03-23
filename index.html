@@ -6,7 +6,6 @@
 
 <style>
 * { box-sizing: border-box; }
-
 body {
   margin: 0;
   font-family: sans-serif;
@@ -37,92 +36,33 @@ h2 { margin: 8px 0; font-size: 18px; }
 
 .activeTab { background: #00ff88; color: black; }
 
-#container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 4px;
-  padding: 2px;
-  width: 100%;
-}
+#container { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 2px; width: 100%; }
 
-.row {
-  border-radius: 8px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  background: #333;
-}
+.row { border-radius: 8px; padding: 4px; display: flex; flex-direction: column; background: #333; }
 
-.row-content {
-  display: flex;
-  width: 100%;
-  height: 80px; /* 固定高さ */
-}
+.row-content { display: flex; width: 100%; }
 
-.count {
-  flex: 1 1 50%;
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.count { flex: 1 1 50%; font-size: 28px; display: flex; align-items: center; justify-content: center; }
 
-.right {
-  flex: 1 1 50%;
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  padding: 0 4px;
-}
+.right { flex: 1 1 50%; display: flex; gap: 4px; align-items: center; padding: 0 4px; }
 
-.name {
-  flex: 1;
-  padding: 6px;
-  font-size: 14px;
-}
+.name { flex: 1; padding: 6px; font-size: 14px; }
 
-.color {
-  width: 32px;
-  height: 32px;
-  border: none;
-  padding: 0;
-}
+.color { width: 32px; height: 32px; border: none; padding: 0; }
 
-.buttons {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
+.buttons { display: flex; gap: 4px; margin-top: 4px; }
 
-button {
-  flex: 1;
-  font-size: 16px;
-  padding: 10px 0;
-  border-radius: 6px;
-  border: none;
-}
+button { flex: 1; font-size: 16px; padding: 10px 0; border-radius: 6px; border: none; }
 
 .active { background: #00ff88; color: black; }
 
 .blink { animation: blinkBg 0.6s infinite; }
 @keyframes blinkBg { 50% { opacity: 0.4; } }
 
-#controls {
-  margin: 6px 0;
-  display: flex;
-  gap: 4%;
-  justify-content: center;
-}
-
+#controls { margin: 6px 0; display: flex; gap: 4%; justify-content: center; }
 #controls button { width: 45%; font-size: 14px; padding: 8px 0; }
 
-#footer {
-  margin: 12px 0;
-  font-size: 10px;
-  opacity: 0.5;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
+#footer { margin: 12px 0; font-size: 10px; opacity: 0.5; letter-spacing: 2px; text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -175,6 +115,7 @@ function loadPreset(){
   const data=JSON.parse(localStorage.getItem("preset_"+currentTab)||"null");
   if(!data||data.length===0) for(let i=0;i<6;i++) createRow();
   else data.forEach(d=>createRow(0,d));
+  adjustRowHeight();
 }
 
 function createRow(i,data={}){
@@ -240,32 +181,36 @@ function createRow(i,data={}){
   row.appendChild(rowContent);
   row.appendChild(btnWrap);
   document.getElementById("container").appendChild(row);
-
-  function stopTimer(){
-    clearInterval(interval);
-    running=false;
-    btn30.classList.remove("active");
-    btn60.classList.remove("active");
-    sound.pause();
-    sound.currentTime=0;
-    row.classList.remove("blink");
-  }
-
-  function start(sec,btn,countEl,rowEl){
-    if(running) return stopTimer();
-    stopTimer();
-    time=sec;
-    running=true;
-    btn.classList.add("active");
-    interval=setInterval(()=>{
-      if(time>0){ time--; countEl.innerText=time; }
-      else{ stopTimer(); sound.currentTime=0; sound.play().catch(e=>console.log(e)); rowEl.classList.add("blink"); }
-    },1000);
-  }
 }
 
-function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
-function removeRow(){ let rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
+function start(sec,btn,countEl,rowEl){
+  let time=sec, running=true;
+  const interval=setInterval(()=>{
+    if(time>0){ time--; countEl.innerText=time; }
+    else{
+      clearInterval(interval);
+      running=false;
+      btn.classList.remove("active");
+      sound.currentTime=0; sound.play().catch(e=>console.log(e));
+      rowEl.classList.add("blink");
+    }
+  },1000);
+  btn.classList.add("active");
+  rowEl.dataset.interval=interval;
+}
+
+function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); adjustRowHeight(); } }
+function removeRow(){ let rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); adjustRowHeight(); } }
+
+/* 初期6枠で画面に収まる行高さに設定 */
+function adjustRowHeight(){
+  const rows=document.querySelectorAll('.row');
+  const screenHeight=window.innerHeight-140; // タブ・コントロール・余白込み
+  const defaultHeight=Math.floor(screenHeight/6);
+  rows.forEach(r=>r.style.height=defaultHeight+'px');
+}
+
+window.addEventListener('resize', adjustRowHeight);
 
 switchTab(0); updateTabs();
 </script>
