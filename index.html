@@ -39,7 +39,7 @@ h2 { margin: 8px 0; font-size: 18px; }
 
 #container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 2px;
   padding: 2px;
   width: 100%;
@@ -51,18 +51,19 @@ h2 { margin: 8px 0; font-size: 18px; }
   display: flex;
   flex-direction: column;
   width: 100%;
+  transition: height 0.2s;
 }
 
 .top {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   width: 100%;
 }
 
 .name {
   flex: 1 1 auto;
-  font-size: 13px;
-  padding: 3px;
+  font-size: 14px;
+  padding: 4px;
   min-width: 0;
 }
 
@@ -75,7 +76,7 @@ h2 { margin: 8px 0; font-size: 18px; }
 }
 
 .time {
-  font-size: clamp(16px, 7vw, 24px);
+  font-size: clamp(16px, 5vw, 28px);
   margin: 2px 0;
 }
 
@@ -88,8 +89,8 @@ h2 { margin: 8px 0; font-size: 18px; }
 button {
   flex: 1;
   padding: 8px 0;
-  font-size: 13px;
-  border-radius: 5px;
+  font-size: 14px;
+  border-radius: 6px;
   border: none;
 }
 
@@ -99,13 +100,13 @@ button {
 @keyframes blinkBg { 50% { opacity: 0.4; } }
 
 #controls {
-  margin: 8px 0;
+  margin: 6px 0;
   display: flex;
   gap: 4%;
   justify-content: center;
 }
 
-#controls button { width: 45%; font-size: 13px; padding: 8px 0; }
+#controls button { width: 45%; font-size: 14px; padding: 8px 0; }
 
 #footer {
   margin: 12px 0;
@@ -152,7 +153,7 @@ for(let i=0;i<5;i++){
   document.getElementById("tabs").appendChild(tab);
 }
 
-function switchTab(i){ currentTab=i; loadPreset(); updateTabs(); }
+function switchTab(i){ currentTab=i; loadPreset(); updateTabs(); optimizeRows(); }
 function updateTabs(){ document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("activeTab",i===currentTab)); }
 
 function savePreset(){
@@ -166,6 +167,7 @@ function loadPreset(){
   const data=JSON.parse(localStorage.getItem("preset_"+currentTab)||"null");
   if(!data||data.length===0) for(let i=0;i<6;i++) createRow();
   else data.forEach(d=>createRow(0,d));
+  optimizeRows();
 }
 
 function createRow(i,data={}){
@@ -177,7 +179,15 @@ function createRow(i,data={}){
   row.dataset.color=data.color||"#333";
 
   row.onclick=()=>{
-    if(interval){ clearInterval(interval); running=false; btn30.classList.remove("active"); btn60.classList.remove("active"); sound.pause(); sound.currentTime=0; row.classList.remove("blink"); }
+    if(interval){
+      clearInterval(interval);
+      running=false;
+      btn30.classList.remove("active");
+      btn60.classList.remove("active");
+      sound.pause();
+      sound.currentTime=0;
+      row.classList.remove("blink");
+    }
   };
 
   const top=document.createElement("div"); top.className="top";
@@ -199,8 +209,20 @@ function createRow(i,data={}){
   document.getElementById("container").appendChild(row);
 }
 
-function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
-function removeRow(){ let rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
+function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); optimizeRows(); } }
+function removeRow(){ let rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); optimizeRows(); } }
+
+/* 枠の高さ自動調整 */
+function optimizeRows(){
+  const rows=document.querySelectorAll('.row');
+  if(rows.length===0) return;
+  const screenHeight=window.innerHeight-150; // タブ・コントロール・余白を考慮
+  const rowHeight=Math.floor(screenHeight / rows.length);
+  rows.forEach(r=>r.style.height=rowHeight+'px');
+}
+
+/* 画面リサイズ時も最適化 */
+window.addEventListener('resize', optimizeRows);
 
 switchTab(0); updateTabs();
 </script>
