@@ -3,8 +3,10 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>特典会タイマー</title>
+
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
+
 <style>
 * { box-sizing: border-box; }
 body {
@@ -30,7 +32,7 @@ h2 { margin: 8px 0; font-size: 18px; }
   background:#333;
   cursor:pointer;
   padding:6px;
-  height:100px; /* 高さ固定 */
+  height:100px;
 }
 .row-content { display:flex; width:100%; }
 .count { flex:1 1 50%; font-size:28px; display:flex; align-items:center; justify-content:center; }
@@ -47,6 +49,7 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 
 #controls { margin:6px 0; display:flex; gap:4%; justify-content:center; }
 #controls button{ width:28%; font-size:14px; padding:8px 0; }
+
 #footer { margin:12px 0; font-size:10px; opacity:0.5; letter-spacing:2px; text-transform:uppercase; }
 </style>
 </head>
@@ -59,7 +62,7 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 <div id="controls">
   <button onclick="addRow()">＋追加</button>
   <button onclick="removeRow()">−削除</button>
-  <button onclick="testSound()">音声テスト</button>
+  <button onclick="toggleTestSound()">音声テスト</button>
 </div>
 
 <div id="footer">Created by TEURU</div>
@@ -71,41 +74,48 @@ button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none;
 <script>
 let currentTab=0, maxRows=10;
 const sound=document.getElementById("endSound");
-sound.load();
 let testPlaying=false;
 
-/* タブ生成 */
+/* タブ */
 for(let i=0;i<5;i++){
   const tab=document.createElement("div");
   tab.className="tab";
   tab.innerText=localStorage.getItem("tab_name_"+i)||"Preset "+(i+1);
   tab.onclick=()=>{
     if(currentTab===i){
-      const newName=prompt("プリセット名を変更",tab.innerText);
-      if(newName){ tab.innerText=newName; localStorage.setItem("tab_name_"+i,newName);}
-    } else { switchTab(i); }
+      const n=prompt("プリセット名変更",tab.innerText);
+      if(n){tab.innerText=n;localStorage.setItem("tab_name_"+i,n);}
+    } else switchTab(i);
   };
-  document.getElementById("tabs").appendChild(tab);
+  tabs.appendChild(tab);
 }
 
-function switchTab(i){ currentTab=i; loadPreset(); updateTabs(); }
-function updateTabs(){ document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("activeTab",i===currentTab)); }
+function switchTab(i){currentTab=i;loadPreset();updateTabs();}
+function updateTabs(){document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("activeTab",i===currentTab));}
 
+/* 保存 */
 function savePreset(){
-  const data=[]; document.querySelectorAll(".row").forEach(r=>data.push({name:r.querySelector(".name").value,color:r.dataset.color}));
+  const data=[];
+  document.querySelectorAll(".row").forEach(r=>{
+    data.push({
+      name:r.querySelector(".name").value,
+      color:r.dataset.color
+    });
+  });
   localStorage.setItem("preset_"+currentTab,JSON.stringify(data));
 }
 
+/* 読込 */
 function loadPreset(){
-  const container=document.getElementById("container");
   container.innerHTML="";
   const data=JSON.parse(localStorage.getItem("preset_"+currentTab)||"null");
-  if(!data||data.length===0) for(let i=0;i<6;i++) createRow();
+  if(!data) for(let i=0;i<6;i++) createRow();
   else data.forEach(d=>createRow(0,d));
 }
 
+/* 枠 */
 function createRow(i,data={}){
-  let time=30, interval=null, running=false, state="inactive";
+  let time=30, interval=null, state="inactive", activeBtn=null;
 
   const row=document.createElement("div");
   row.className="row";
@@ -131,10 +141,22 @@ function createRow(i,data={}){
   color.type="color";
   color.className="color";
   color.value=data.color||"#444444";
-  color.oninput=()=>{ row.style.background=color.value; row.dataset.color=color.value; savePreset(); };
+  color.oninput=()=>{row.style.background=color.value;row.dataset.color=color.value;savePreset();};
+
+  const reset=document.createElement("button");
+  reset.innerText="↺";
+  reset.style.height="32px";
+  reset.onclick=(e)=>{
+    e.stopPropagation();
+    stopTimer();
+    time=30;
+    count.innerText=time;
+  };
 
   right.appendChild(name);
   right.appendChild(color);
+  right.appendChild(reset);
+
   rowContent.appendChild(count);
   rowContent.appendChild(right);
 
@@ -146,82 +168,99 @@ function createRow(i,data={}){
   const btn60=document.createElement("button");
   btn60.innerText="60";
 
-  function stopTimer(ignoreActive=false){
-    if(interval){ 
-      clearInterval(interval); interval=null; running=false; 
-      btn30.classList.remove("active","paused"); 
-      btn60.classList.remove("active","paused"); 
-      if(!ignoreActive){ sound.pause(); sound.currentTime=0; row.classList.remove("blink"); state="inactive"; }
-    }
+  function stopTimer(){
+    clearInterval(interval);
+    interval=null;
+
+    btn30.classList.remove("active","paused");
+    btn60.classList.remove("active","paused");
+
+    btn30.disabled=false;
+    btn60.disabled=false;
+
+    sound.pause();
+    sound.currentTime=0;
+    row.classList.remove("blink");
+
+    state="inactive";
+    activeBtn=null;
   }
 
-  function startPauseResume(sec, btn){
-    if(row.classList.contains("blink")) return; // 点滅中は無効
+  function start(sec,btn){
+    if(row.classList.contains("blink")) return;
+    if(activeBtn && activeBtn!==btn) return;
+
     if(state==="inactive"){
-      time=sec; count.innerText=time;
-      startTimer(btn);
+      time=sec;
+      count.innerText=time;
+      activeBtn=btn;
+
+      btn30.disabled = btn!==btn30;
+      btn60.disabled = btn!==btn60;
+
+      run();
       state="running";
       btn.classList.add("active");
+
     } else if(state==="running"){
-      clearInterval(interval); running=false;
+      clearInterval(interval);
       state="paused";
       btn.classList.add("paused");
-    } else if(state==="paused"){
-      startTimer(btn);
+
+    } else {
+      run();
       state="running";
       btn.classList.remove("paused");
     }
   }
 
-  function startTimer(btn){
-    running=true;
+  function run(){
     interval=setInterval(()=>{
       if(time>0){
-        time--; count.innerText=time;
+        time--;
+        count.innerText=time;
       } else {
-        clearInterval(interval); interval=null; running=false;
+        stopTimer();
         row.classList.add("blink");
-        sound.currentTime=0; sound.play().catch(e=>console.log(e));
-        state="inactive";
-        btn30.classList.remove("active","paused");
-        btn60.classList.remove("active","paused");
+        sound.currentTime=0;
+        sound.play().catch(()=>{});
       }
     },1000);
   }
 
-  btn30.onclick=(e)=>{ e.stopPropagation(); startPauseResume(30,btn30); };
-  btn60.onclick=(e)=>{ e.stopPropagation(); startPauseResume(60,btn60); };
+  btn30.onclick=(e)=>{e.stopPropagation();start(30,btn30);}
+  btn60.onclick=(e)=>{e.stopPropagation();start(60,btn60);}
 
-  row.addEventListener("click", ()=>{
+  row.onclick=()=>{
     if(row.classList.contains("blink")){
       sound.pause(); sound.currentTime=0;
       row.classList.remove("blink");
     }
-    stopTimer(true); // ignoreActiveでボタン状態維持
-  });
+  };
 
-  btnWrap.appendChild(btn30);
-  btnWrap.appendChild(btn60);
-  row.appendChild(rowContent);
-  row.appendChild(btnWrap);
-  document.getElementById("container").appendChild(row);
+  btnWrap.append(btn30,btn60);
+  row.append(rowContent,btnWrap);
+  container.appendChild(row);
 }
 
-function addRow(){ if(document.querySelectorAll(".row").length<maxRows){ createRow(); savePreset(); } }
-function removeRow(){ const rows=document.querySelectorAll(".row"); if(rows.length>0){ rows[rows.length-1].remove(); savePreset(); } }
+/* 操作 */
+function addRow(){ if(document.querySelectorAll(".row").length<maxRows){createRow();savePreset();}}
+function removeRow(){ const r=document.querySelectorAll(".row"); if(r.length){r[r.length-1].remove();savePreset();}}
 
-function testSound(){
-  if(!testPlaying){
-    sound.currentTime=0; sound.play().catch(e=>console.log(e));
-    testPlaying=true;
-  } else {
-    sound.pause();
-    sound.currentTime=0;
+/* 音声テスト */
+function toggleTestSound(){
+  if(testPlaying){
+    sound.pause(); sound.currentTime=0;
     testPlaying=false;
+  } else {
+    sound.currentTime=0;
+    sound.play().catch(()=>{});
+    testPlaying=true;
   }
 }
 
-switchTab(0); updateTabs();
+switchTab(0);
+updateTabs();
 </script>
 
 </body>
