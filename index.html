@@ -2,7 +2,7 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>特典会タイマー</title>
 
@@ -10,8 +10,9 @@
 <link rel="apple-touch-icon" href="favicon.png">
 
 <style>
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+
+html, body {
   touch-action: manipulation;
 }
 
@@ -21,8 +22,8 @@ body {
   background: black;
   color: white;
   text-align: center;
+  max-width: 100vw;
   overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
 }
 
 h2 { margin: 8px 0; font-size: 18px; }
@@ -31,56 +32,54 @@ h2 { margin: 8px 0; font-size: 18px; }
 .tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap; }
 .activeTab{ background:#00ff88; color:black; }
 
-#container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; }
+#container { display:grid; grid-template-columns:1fr; gap:6px; padding:4px; width:100%; }
 
 .row {
   border-radius:12px;
   display:flex;
   flex-direction:column;
   background:#333;
+  cursor:pointer;
   padding:6px;
   height:100px;
 }
 
-.row-content { display:flex; }
+.row-content { display:flex; width:100%; }
 
 .count {
-  flex:1;
+  flex:1 1 50%;
   font-size:28px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-/* 👇 スマホ最適化ここ */
+/* 👇 ここ調整済み */
 .right {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-}
-
-.right-top {
+  flex:1 1 50%;
   display:flex;
   gap:4px;
+  align-items:center;
+  padding:0 4px;
 }
 
 .name {
-  flex:1;
+  flex:0 0 55%;
+  min-width:0;
   padding:6px;
   font-size:14px;
 }
 
 .color {
-  width:36px;
+  flex:0 0 36px;
   height:32px;
   border:none;
+  padding:0;
 }
 
-/* 👇 押しやすいリセット */
-.reset {
+.right button {
+  flex:0 0 48px;
   height:32px;
-  width:100%;
   font-size:14px;
 }
 
@@ -104,10 +103,26 @@ button {
 .blink { animation: blinkBg 0.6s infinite; }
 @keyframes blinkBg { 50% { opacity:0.4; } }
 
-#controls { display:flex; gap:4%; margin:6px; }
-#controls button { width:28%; }
+#controls {
+  margin:6px 0;
+  display:flex;
+  gap:4%;
+  justify-content:center;
+}
 
-#footer { font-size:10px; opacity:0.5; margin:10px; }
+#controls button {
+  width:28%;
+  font-size:14px;
+  padding:8px 0;
+}
+
+#footer {
+  margin:12px 0;
+  font-size:10px;
+  opacity:0.5;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
 </style>
 </head>
 
@@ -191,9 +206,6 @@ function createRow(i,data={}){
   const right=document.createElement("div");
   right.className="right";
 
-  const rightTop=document.createElement("div");
-  rightTop.className="right-top";
-
   const name=document.createElement("input");
   name.className="name";
   name.value=data.name||"";
@@ -202,15 +214,11 @@ function createRow(i,data={}){
   const color=document.createElement("input");
   color.type="color";
   color.className="color";
-  color.value=data.color||"#444";
+  color.value=data.color||"#444444";
   color.oninput=()=>{row.style.background=color.value;row.dataset.color=color.value;savePreset();};
 
-  rightTop.append(name,color);
-
   const reset=document.createElement("button");
-  reset.className="reset";
   reset.innerText="↺";
-
   reset.onclick=(e)=>{
     e.stopPropagation();
     stopTimer();
@@ -218,8 +226,7 @@ function createRow(i,data={}){
     count.innerText=time;
   };
 
-  right.append(rightTop,reset);
-
+  right.append(name,color,reset);
   rowContent.append(count,right);
 
   const btnWrap=document.createElement("div");
@@ -234,13 +241,17 @@ function createRow(i,data={}){
   function stopTimer(){
     clearInterval(interval);
     interval=null;
+
     btn30.classList.remove("active","paused");
     btn60.classList.remove("active","paused");
+
     btn30.disabled=false;
     btn60.disabled=false;
+
     sound.pause();
     sound.currentTime=0;
     row.classList.remove("blink");
+
     state="inactive";
     activeBtn=null;
   }
@@ -253,15 +264,19 @@ function createRow(i,data={}){
       time=sec;
       count.innerText=time;
       activeBtn=btn;
+
       btn30.disabled = btn!==btn30;
       btn60.disabled = btn!==btn60;
+
       run();
       state="running";
       btn.classList.add("active");
+
     } else if(state==="running"){
       clearInterval(interval);
       state="paused";
       btn.classList.add("paused");
+
     } else {
       run();
       state="running";
@@ -272,7 +287,8 @@ function createRow(i,data={}){
   function run(){
     interval=setInterval(()=>{
       if(time>0){
-        time--; count.innerText=time;
+        time--;
+        count.innerText=time;
       } else {
         stopTimer();
         row.classList.add("blink");
