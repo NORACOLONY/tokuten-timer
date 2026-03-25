@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>特典会タイマー</title>
 
 <link rel="icon" href="favicon.png">
@@ -9,6 +11,11 @@
 
 <style>
 * { box-sizing: border-box; }
+
+html, body {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   font-family: sans-serif;
@@ -18,7 +25,9 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
 }
+
 h2 { margin: 8px 0; font-size: 18px; }
+
 #tabs { display:flex; gap:4px; padding:4px; overflow-x:auto; }
 .tab { flex:1 0 auto; background:#222; padding:4px; border-radius:6px; font-size:12px; white-space:nowrap; }
 .activeTab{ background:#00ff88; color:black; }
@@ -34,28 +43,93 @@ h2 { margin: 8px 0; font-size: 18px; }
   padding:6px;
   height:100px;
 }
+
 .row-content { display:flex; width:100%; }
-.count { flex:1 1 50%; font-size:28px; display:flex; align-items:center; justify-content:center; }
-.right { flex:1 1 50%; display:flex; gap:4px; align-items:center; padding:0 4px; }
-.name { flex:1; padding:6px; font-size:14px; }
-.color { width:32px; height:32px; border:none; padding:0; }
-.buttons { display:flex; gap:4px; margin-top:6px; }
-button { flex:1; font-size:16px; padding:10px 0; border-radius:8px; border:none; }
+
+.count {
+  flex:1 1 50%;
+  font-size:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* 👇 ここ調整済み */
+.right {
+  flex:1 1 50%;
+  display:flex;
+  gap:4px;
+  align-items:center;
+  padding:0 4px;
+}
+
+.name {
+  flex:0 0 55%;
+  min-width:0;
+  padding:6px;
+  font-size:14px;
+}
+
+.color {
+  flex:0 0 36px;
+  height:32px;
+  border:none;
+  padding:0;
+}
+
+.right button {
+  flex:0 0 48px;
+  height:32px;
+  font-size:14px;
+}
+
+.buttons {
+  display:flex;
+  gap:4px;
+  margin-top:6px;
+}
+
+button {
+  flex:1;
+  font-size:16px;
+  padding:10px 0;
+  border-radius:8px;
+  border:none;
+}
+
 .active { background:#00ff88; color:black; }
 .paused { background:yellow; color:black; }
 
 .blink { animation: blinkBg 0.6s infinite; }
-@keyframes blinkBg{50%{opacity:0.4;}}
+@keyframes blinkBg { 50% { opacity:0.4; } }
 
-#controls { margin:6px 0; display:flex; gap:4%; justify-content:center; }
-#controls button{ width:28%; font-size:14px; padding:8px 0; }
+#controls {
+  margin:6px 0;
+  display:flex;
+  gap:4%;
+  justify-content:center;
+}
 
-#footer { margin:12px 0; font-size:10px; opacity:0.5; letter-spacing:2px; text-transform:uppercase; }
+#controls button {
+  width:28%;
+  font-size:14px;
+  padding:8px 0;
+}
+
+#footer {
+  margin:12px 0;
+  font-size:10px;
+  opacity:0.5;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
 </style>
 </head>
+
 <body>
 
 <h2>特典会タイマー</h2>
+
 <div id="tabs"></div>
 <div id="container"></div>
 
@@ -145,7 +219,6 @@ function createRow(i,data={}){
 
   const reset=document.createElement("button");
   reset.innerText="↺";
-  reset.style.height="32px";
   reset.onclick=(e)=>{
     e.stopPropagation();
     stopTimer();
@@ -153,18 +226,15 @@ function createRow(i,data={}){
     count.innerText=time;
   };
 
-  right.appendChild(name);
-  right.appendChild(color);
-  right.appendChild(reset);
-
-  rowContent.appendChild(count);
-  rowContent.appendChild(right);
+  right.append(name,color,reset);
+  rowContent.append(count,right);
 
   const btnWrap=document.createElement("div");
   btnWrap.className="buttons";
 
   const btn30=document.createElement("button");
   btn30.innerText="30";
+
   const btn60=document.createElement("button");
   btn60.innerText="60";
 
@@ -233,7 +303,8 @@ function createRow(i,data={}){
 
   row.onclick=()=>{
     if(row.classList.contains("blink")){
-      sound.pause(); sound.currentTime=0;
+      sound.pause();
+      sound.currentTime=0;
       row.classList.remove("blink");
     }
   };
